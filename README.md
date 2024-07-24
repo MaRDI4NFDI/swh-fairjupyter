@@ -1,16 +1,6 @@
-![GitHub top language](https://img.shields.io/github/languages/top/Ramy-Badr-Ahmed/swh-client)
-![GitHub](https://img.shields.io/github/license/Ramy-Badr-Ahmed/swh-client)
-[![SWH](https://archive.softwareheritage.org/badge/swh:1:dir:ce683dcced024cb3af1db3b01bbe86f2a9b08028/)](https://archive.softwareheritage.org/swh:1:dir:ce683dcced024cb3af1db3b01bbe86f2a9b08028;origin=https://github.com/Ramy-Badr-Ahmed/swh-client;visit=swh:1:snp:63102a06d859d7d3bcccf1bfe5ade84d8e54e2d5;anchor=swh:1:rev:fb18ecd48c6d62947316845716fc578030ccf749)
+# Software Heritage API-Client demo for FAIR Jupyter knowledge graph
 
-# SWH API Client
-
-This is a PHP API client/connector for [Software Heritage (SWH) web API](https://archive.softwareheritage.org/api/) - currently in Beta phase. The client is wrapped round the [`Illuminate Http package`](https://packagist.org/packages/illuminate/http) and the [`GuzzleHTTP`](https://docs.guzzlephp.org/en/stable/index.html) library.
-
->[!Note]
-> _**Detailed documentation**_ can be found in the [wiki pages](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki) of this very repository.
->
->  A demonstrable version (some features) can be accessed here: <a href="https://1959e979-c58a-4d3c-86bb-09ec2dfcec8a.ka.bw-cloud-instance.org/" target="_blank">**Demo Version**</a>
->> Working on new features and fixes will be gladly considered. Please feel free to report.
+[FAIR Jupyter](https://fusion-jena.github.io/fairjupyter/) is a knowledge graph representation of [Dataset of a Study of Computational reproducibility of Jupyter notebooks from biomedical publications](https://doi.org/10.5281/zenodo.8226725). The knowledge graph can be queried, e.g. for [GitHub repositories associated with the Jupyter notebooks in the dataset](https://reproduceme.uni-jena.de/#/dataset/fairjupyter/query?query=%23%20List%20of%20GitHub%20repositories%20covered%20by%20https%3A%2F%2Fdoi.org%2F10.1093%2Fgigascience%2Fgiad113%20%0A%0ASELECT%20DISTINCT%20%0A%3Frepo_url_base%0AWHERE%20%7B%0A%20%20%3Frepository%20%3Chttps%3A%2F%2Fw3id.org%2Freproduceme%2Furl%3E%20%3Frepo_url_base%20.%0A%7D%0AORDER%20BY%20ASC%28%3Frepo_url_base%29), from which the file [FIZ/queryResults.csv](FIZ/queryResults.csv) was generated.
 
 ## Installation Steps:
 
@@ -22,7 +12,7 @@ This is a PHP API client/connector for [Software Heritage (SWH) web API](https:/
 
         This should involve installing the PHP REPL, PsySH
 
-    3) (Optional) Acquire SWH tokens for increased SWH-API Rate-Limits.
+    3) Acquire SWH tokens for increased SWH-API Rate-Limits.
     
     4) Prepare .env file and add tokens:   
     
@@ -31,128 +21,32 @@ This is a PHP API client/connector for [Software Heritage (SWH) web API](https:/
                 
         4.2) (Optional) Edit these two token keys:
         
-                SWH_TOKEN=Your_TOKEN_FROM_SWH_ACCOUNT                   # step 3)                 
+                SWH_TOKEN_PROD=Your_TOKEN_FROM_SWH_ACCOUNT                   # step 3)                 
                 SWH_TOKEN_STAGING=Your_STAGING_TOKEN_FROM_SWH_ACCOUNT   # step 3)                 
-
-    5) (optional) Add psysh to PATH.
 
 ## Quickstart:
 
-In a console session inside the cloned directory, start the php REPL:
+In a console session inside the cloned directory, start the archival:
 
 ```php
-$ psysh     // if not added to PATH replace with: vendor/bin/psysh
-
-Psy Shell v0.12.0 (PHP 8.2.0 — cli) by Justin Hileman
+php -r "require 'Experiments.php'; require 'vendor/autoload.php'; FIZ\Experiments::archiveTest();"
 ```
-
-This will open a REPL console-based session where one can test the functionality of the api classes and their methods before building a suitable workflow/use-cases.
-
-### Presets
-
-As a one-time configuration parameter, you can set the desired returned data type by SWH (default JSON):
-
+This generates the a file named requestIDs.txt.
+To retrieve the archived ids, run:
 ```php
-> namespace Module\HTTPConnector;
-> use Module\HTTPConnector;         
-
-> HTTPClient::setOptions(responseType:'object')     // json/collect/object available
+php -r "require 'Experiments.php'; require 'vendor/autoload.php'; FIZ\Experiments::getSwhIDs();"
 ```
 
-> * More details on the default configs: [Default Configurations](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#default-configurations)
-> * More details on further options set: [Preset Configurations](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki).
+notes:
+Sometimes, swh doesn't complete a given archival process (their internal work) but yet they send that it has succeeded.
 
-### Visits
+So we had to modify the code to assume that SWH may report success but without generated IDs given (in the very same json response) or gives partial data in the deeply nested nodes.
 
-Retrieve Latest Full Visit in the SWH archive:
+In the swhIDs.txt, one can find all the successfully archived and tracked repositories. 5122 succeeded out of 5154 in total.
 
-```php
-> namespace Module\OriginVisits;
-> use Module\OriginVisits; 
+In the requestIDs-failed.txt, you can find those that have failed by SWH. There's no reason given by SWH. We repeated the archival request but yet swh reported "failed" again.
 
-> $visitObject = new SwhVisits('https://github.com/torvalds/linux/');
+In the requestIDs-2ndRun.txt, that was just the remaining URLs from the failed run.
 
-> $visitObject->getVisit('latest', requireSnapshot: true)
-```
+> More details: [Archive](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki).
 
-> More details on further swh visits methods: [SwhVisits](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#ii-swhvisits).
-
-### DAG Model:
-
-As graph Nodes, retrieve node Contents, Edges or find a Path to other nodes (top-bottom):
-
-```php
-> namespace Module\DAGModel;
-> use Module\DAGModel; 
-
-> $snpNode = new GraphNode('swh:1:snp:bcfd516ef0e188d20056c77b8577577ac3ca6e58')
-
-> $snpNode->nodeHopp()   // node contents
-
-> $snpNode->nodeEdges()  // node edges keyed by the respective name
-
-> $revNode = new GraphNode('swh:1:rev:9cf5bf02b583b93aa0d149cac1aa06ee4a4f655c')
-
-> $revNode->nodeTraversal('deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h.in') //  traverse to a deeply nested file
-```
-
-More details on:
-
-> * General [Node Methods](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#iii-graphnode).
-> * The Graph methods:
->   * [Graph contents](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#iv-graphhopping)
->   * [Graph edges](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#v-graphedges)
->   * [Graph paths](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#vi-graphtraversal)
-
-### Archive
-
-You can specify repositories URL w/o paths and archive to SWH using one of the two variants (`static/non-static methods`):
-
-```php
-> namespace Module\Archival;
-> use Module\Archival; 
-    
-> $saveRequest = new Archive('https://github.com/torvalds/linux/')    // Example 1
-> $saveRequest->save2Swh()
-    
-> $newSaveRequest = Archive::repository('https://github.com/hylang/hy/tree/stable/hy/core')  // Example 2
-
-    // in both cases: the returned POST response contains the save request id and date
-```
-
-Enquire about archival status using the id/date of the archival request (available in the initial POST response)
-
-```php
-> $saveRequest->getArchivalStatus($saveRequestDateOrID)     // current status is returned 
-> $saveRequest->trackArchivalStatus($saveRequestDateOrID)   // tracks until archival has succeeded
-```
-
-> More details on further archive methods: [Archive](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#vii-archive).
-
-### EBNF Grammar
-
-Validate a given swhID. `TypeError` is thrown for non-valid swhIDs.
-
-```php
-> namespace Module\DataType; 
-> use Module\DataType; 
-         
-$snpID = new SwhcoreId('swh:1:snp:bcfd516ef0e188d20056c77b8577577ac3ca6e5Z') // throws TypeError Exception
-```
-> Full details of the SWHID persistent Identifiers: [Syntax](https://docs.softwareheritage.org/devel/swh-model/persistent-identifiers.html#syntax)
-
->[!Note]
-> Todo: Core identifiers with qualifiers.
-
-### MetaData
-
-Returns a list of metadata authorities that provided metadata on the given target
-
-```php
-> namespace Module\MetaData;
-> use Module\MetaData; 
-
-> SwhMetaData::getOriginMetaData('https://github.com/torvalds/linux/')
-```
-
-> More details on further metadata methods: [Metadata](https://github.com/Ramy-Badr-Ahmed/swh-client/wiki#viii-metadata).
