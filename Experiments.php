@@ -51,7 +51,7 @@ abstract class Experiments
         $start = microtime(true);
 
         do{
-            $requests = file_get_contents('FIZ/requestIDs-processed.txt');
+            $requests = file_get_contents('FIZ/requestIDs-processing.txt');
             $requestsArray = explode("\n", $requests);
             array_pop($requestsArray);
 
@@ -84,7 +84,7 @@ abstract class Experiments
                     }
 
 
-                }catch (Exception $e){
+                } catch (Exception $e){
                     $failed[] = $request;
                     continue;
                 }
